@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>yoink oink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<!-- this was made by Mahdi Hasan (skatingonice) for 2 specific persons who exists in their life,
+for Meskat Zaman & Jannatul Meskat. -->
+  <audio id="bg-music" autoplay loop preload="auto">
+    <source src="src/I Wanna Be Yours (mp3cut.net).mp3" type="audio/mpeg" />
+  </audio>
+
+  <main class="wrap">
+    <h1>countdown to the birthday of a special nonchalant person :D</h1>
+    <button type="button" id="notify-btn" class="notify-btn">
+      <span class="notify-btn__icon" aria-hidden="true"></span>
+      <span class="notify-btn__text" id="notify-btn-text">Get Notifications</span>
+    </button>
+    <p class="note notify-status" id="notify-status"></p>
+
+    <section class="countdown" aria-live="polite">
+      <article class="unit">
+        <span class="value" id="days">00</span>
+        <div class="label">Days</div>
+      </article>
+      <article class="unit">
+        <span class="value" id="hours">00</span>
+        <div class="label">Hours</div>
+      </article>
+      <article class="unit">
+        <span class="value" id="minutes">00</span>
+        <div class="label">Minutes</div>
+      </article>
+      <article class="unit">
+        <span class="value" id="seconds">00</span>
+        <div class="label">Seconds</div>
+      </article>
+    </section>
+
+    <p class="note" id="status"></p>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
