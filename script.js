@@ -78,6 +78,7 @@ function notifyBirthdayIfAllowed() {
   if (hasSentBirthdayNotification) return;
   if (!("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
+  if (Date.now() < targetDate.getTime()) return;
 
   new Notification("Birthday Countdown", {
     body: "The countdown is over. Happy Birthday!"
