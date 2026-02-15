@@ -1,4 +1,4 @@
-const targetDate = new Date("2026-12-08T00:00:00");
+const targetDate = new Date(2026, 11, 8, 0, 0, 0, 0);
 
 const refs = {
   days: document.getElementById("days"),
@@ -20,6 +20,7 @@ const prev = {
 
 const bgMusic = document.getElementById("bg-music");
 let hasSentBirthdayNotification = false;
+let hasReachedTargetDate = false;
 
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -97,7 +98,6 @@ async function enableNotifications() {
   }
 
   updateNotificationUi();
-  notifyBirthdayIfAllowed();
 }
 
 function tick() {
@@ -110,9 +110,15 @@ function tick() {
     animateIfChanged("minutes", "00");
     animateIfChanged("seconds", "00");
     refs.status.textContent = "It is her birthday today. Happy Birthday!";
-    notifyBirthdayIfAllowed();
+
+    if (!hasReachedTargetDate) {
+      hasReachedTargetDate = true;
+      notifyBirthdayIfAllowed();
+    }
     return;
   }
+
+  hasReachedTargetDate = false;
 
   const totalSeconds = Math.floor(diff / 1000);
   const days = Math.floor(totalSeconds / 86400);
