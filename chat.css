@@ -101,6 +101,8 @@ body {
   border-radius: 10px;
   background: #101010;
   padding: 10px;
+  overflow: hidden;
+  transition: transform 0.18s ease, opacity 0.18s ease;
 }
 
 .message.you {
@@ -125,10 +127,17 @@ body {
 }
 
 .reactions {
-  margin-top: 10px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.msg-actions {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .react-btn {
@@ -150,6 +159,56 @@ body {
 .react-btn.active {
   border-color: #d8d8d8;
   background: #2b2b2b;
+}
+
+.react-btn.bump {
+  animation: react-pop 0.24s ease;
+}
+
+.delete-btn {
+  border: 1px solid #5a3131;
+  background: #1e1111;
+  color: #ffdada;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: #2b1717;
+}
+
+.message.deleting {
+  animation: msg-delete-out 0.24s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes react-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.16);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes msg-delete-out {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(14px) scale(0.96);
+  }
 }
 
 .chat-form {

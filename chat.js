@@ -4,6 +4,7 @@ import {
   arrayRemove,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   limit,
   onSnapshot,
@@ -37,6 +38,12 @@ let unsubscribe = null;
 let localPollTimer = null;
 let currentMessages = [];
 
+function delay(ms) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
 function setStatus(text) {
   statusEl.textContent = text;
 }
@@ -48,6 +55,11 @@ function getCurrentUser() {
 function formatTime(ms) {
   if (!ms) return "sending...";
   return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function deriveStableId(msg) {
+  if (msg.id) return String(msg.id);
+  return `${String(msg.sender || "")}-${Number(msg.createdAtMs || 0)}-${String(msg.text || "").slice(0, 30)}`;
 }
 
 function normalizeMessage(msg) {
@@ -62,7 +74,7 @@ function normalizeMessage(msg) {
   });
 
   return {
-    id: String(msg.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+    id: deriveStableId(msg),
     sender: String(msg.sender || ""),
     text: String(msg.text || ""),
     createdAtMs: Number(msg.createdAtMs || Date.now()),
@@ -100,7 +112,18 @@ function renderMessages(messages) {
     text.className = "text";
     text.textContent = msg.text || "";
 
-    item.append(meta, text);
+    const actions = document.createElement("div");
+    actions.className = "msg-actions";
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "delete-btn";
+    deleteBtn.dataset.deleteMsg = "1";
+    deleteBtn.dataset.msgId = msg.id;
+    deleteBtn.textContent = "Delete";
+    actions.appendChild(deleteBtn);
+
+    item.append(meta, text, actions);
 
     if (msg.sender !== user) {
       const reactions = document.createElement("div");
@@ -118,7 +141,7 @@ function renderMessages(messages) {
         reactions.appendChild(button);
       });
 
-      item.appendChild(reactions);
+      actions.prepend(reactions);
     }
 
     messagesEl.appendChild(item);
@@ -175,6 +198,13 @@ function toggleLocalReaction(msgId, reactionKey) {
 
   localStorage.setItem(LOCAL_MESSAGES_KEY, JSON.stringify(messages.slice(-200)));
   renderMessages(messages);
+}
+
+function removeLocalMessage(msgId) {
+  const messages = readLocalMessages();
+  const nextMessages = messages.filter((msg) => msg.id !== msgId);
+  localStorage.setItem(LOCAL_MESSAGES_KEY, JSON.stringify(nextMessages.slice(-200)));
+  renderMessages(nextMessages);
 }
 
 function initLocalMessages() {
@@ -252,6 +282,29 @@ function init() {
   });
 
   messagesEl.addEventListener("click", async (event) => {
+    const deleteButton = event.target.closest("button[data-delete-msg='1']");
+    if (deleteButton) {
+      const msgId = deleteButton.dataset.msgId;
+      if (!msgId) return;
+
+      const messageEl = deleteButton.closest(".message");
+      if (messageEl) messageEl.classList.add("deleting");
+      await delay(220);
+
+      try {
+        if (!hasPlaceholderConfig && db) {
+          await deleteDoc(doc(db, ROOM_COLLECTION, msgId));
+        } else {
+          removeLocalMessage(msgId);
+        }
+      } catch (error) {
+        if (messageEl) messageEl.classList.remove("deleting");
+        console.error(error);
+        setStatus("Could not delete message. Check Firebase permissions.");
+      }
+      return;
+    }
+
     const button = event.target.closest("button[data-react-btn='1']");
     if (!button) return;
 
@@ -263,6 +316,9 @@ function init() {
     if (!msg || msg.sender === user) return;
 
     try {
+      button.classList.add("bump");
+      window.setTimeout(() => button.classList.remove("bump"), 260);
+
       if (!hasPlaceholderConfig && db) {
         const alreadyReacted = didUserReact(msg, reactionKey);
         const path = `reactions.${reactionKey}`;
