@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anonymous Firebase Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="chat.css" />
+</head>
+<body>
+  <main class="chat-app">
+    <header class="chat-header">
+      <h1>Anonymous Chat</h1>
+      <p id="status" class="status">Checking session...</p>
+      <div class="header-actions">
+        <button id="logout-btn" class="logout-btn" type="button">Log Out</button>
+        <a href="index.html" class="back-link">Back To Countdown</a>
+      </div>
+    </header>
+
+    <section id="messages" class="messages" aria-live="polite"></section>
+
+    <form id="chat-form" class="chat-form" autocomplete="off">
+      <input id="message-input" type="text" maxlength="300" placeholder="Type a message..." required />
+      <button type="submit">Send</button>
+    </form>
+  </main>
+
+  <script type="module" src="chat.js"></script>
+</body>
+</html>

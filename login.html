@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+  <main class="login-card">
+    <h1>Private Chat Login</h1>
+    <p id="login-status" class="status">Sign in with your username and password.</p>
+
+    <form id="login-form" class="login-form" autocomplete="off">
+      <input id="username" type="text" placeholder="Username" required />
+      <input id="password" type="password" placeholder="Password" required />
+      <button type="submit">Sign In</button>
+    </form>
+
+    <a class="back-link" href="index.html">Back To Countdown</a>
+  </main>
+
+  <script type="module" src="login.js"></script>
+</body>
+</html>
