@@ -123,6 +123,40 @@ function extractTextFromUnknownShape(msg) {
     if (typeof value === "string" && value.trim()) return value;
   }
 
+  const blockedKeyParts = ["sender", "user", "uid", "time", "date", "reaction", "id"];
+  const seen = new Set();
+
+  function visit(value, keyPath, depth) {
+    if (depth > 5 || value == null) return "";
+    if (typeof value === "string") {
+      const cleaned = value.trim();
+      if (!cleaned) return "";
+      const loweredPath = keyPath.toLowerCase();
+      const isBlocked = blockedKeyParts.some((part) => loweredPath.includes(part));
+      return isBlocked ? "" : cleaned;
+    }
+    if (typeof value !== "object") return "";
+    if (seen.has(value)) return "";
+    seen.add(value);
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = visit(item, keyPath, depth + 1);
+        if (found) return found;
+      }
+      return "";
+    }
+
+    for (const [k, v] of Object.entries(value)) {
+      const found = visit(v, `${keyPath}.${k}`, depth + 1);
+      if (found) return found;
+    }
+    return "";
+  }
+
+  const deepText = visit(msg, "root", 0);
+  if (deepText) return deepText;
+
   return "";
 }
 
@@ -142,7 +176,7 @@ function normalizeMessage(msg) {
   return {
     id: deriveStableId(msg),
     sender: String(msg.sender || ""),
-    text: messageText,
+    text: messageText || "[no message text saved]",
     createdAtMs: parseCreatedAtMs(msg.createdAtMs ?? msg.createdAt ?? msg.timestamp),
     reactions
   };
