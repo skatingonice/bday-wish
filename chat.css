@@ -124,6 +124,34 @@ body {
   word-wrap: break-word;
 }
 
+.reactions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.react-btn {
+  border: 1px solid #383838;
+  background: #161616;
+  color: var(--text);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.react-btn:hover {
+  background: #232323;
+}
+
+.react-btn.active {
+  border-color: #d8d8d8;
+  background: #2b2b2b;
+}
+
 .chat-form {
   display: grid;
   grid-template-columns: 1fr auto;
