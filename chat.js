@@ -1,4 +1,4 @@
-import * as firebaseConfigModule from "./firebase-config.js?v=20260219-2";
+import * as firebaseConfigModule from "./firebase-config.js?v=1.3.0";
 import {
   addDoc,
   arrayRemove,
@@ -8,7 +8,6 @@ import {
   doc,
   limit,
   onSnapshot,
-  orderBy,
   query,
   updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -59,9 +58,18 @@ function formatTime(ms) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function extractSender(msg) {
+  const senderCandidates = [msg?.sender, msg?.username, msg?.user, msg?.from, msg?.name];
+  const sender = senderCandidates.find((value) => typeof value === "string" && value.trim());
+  return (sender || "unknown").toLowerCase();
+}
+
 function deriveStableId(msg) {
   if (msg.id) return String(msg.id);
-  return `${String(msg.sender || "")}-${Number(msg.createdAtMs || 0)}-${String(msg.text || "").slice(0, 30)}`;
+  const sender = extractSender(msg);
+  const text = extractTextFromUnknownShape(msg);
+  const created = parseCreatedAtMs(msg?.createdAtMs ?? msg?.createdAt ?? msg?.timestamp);
+  return `${sender}-${created}-${text.slice(0, 30)}`;
 }
 
 function parseCreatedAtMs(value) {
@@ -123,7 +131,7 @@ function extractTextFromUnknownShape(msg) {
     if (typeof value === "string" && value.trim()) return value;
   }
 
-  const blockedKeyParts = ["sender", "user", "uid", "time", "date", "reaction", "id"];
+  const blockedKeyParts = ["sender", "user", "uid", "time", "date", "reaction"];
   const seen = new Set();
 
   function visit(value, keyPath, depth) {
@@ -157,6 +165,13 @@ function extractTextFromUnknownShape(msg) {
   const deepText = visit(msg, "root", 0);
   if (deepText) return deepText;
 
+  try {
+    const debugText = JSON.stringify(msg);
+    if (debugText && debugText !== "{}") return debugText;
+  } catch (error) {
+    console.error(error);
+  }
+
   return "";
 }
 
@@ -172,11 +187,12 @@ function normalizeMessage(msg) {
   });
 
   const messageText = extractTextFromUnknownShape(msg);
+  const sender = extractSender(msg);
 
   return {
     id: deriveStableId(msg),
-    sender: String(msg.sender || ""),
-    text: messageText || "[no message text saved]",
+    sender,
+    text: messageText || "[message data present but text field not mapped]",
     createdAtMs: parseCreatedAtMs(msg.createdAtMs ?? msg.createdAt ?? msg.timestamp),
     reactions
   };
@@ -339,7 +355,7 @@ function initLocalMessages() {
 }
 
 function initRealtimeMessages() {
-  const q = query(collection(db, ROOM_COLLECTION), orderBy("createdAtMs", "asc"), limit(200));
+  const q = query(collection(db, ROOM_COLLECTION), limit(400));
 
   unsubscribe = onSnapshot(
     q,
