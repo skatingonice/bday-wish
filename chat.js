@@ -112,8 +112,9 @@ function renderMessages(messages) {
     text.className = "text";
     text.textContent = msg.text || "";
 
-    const actions = document.createElement("div");
-    actions.className = `msg-actions ${msg.sender === user ? "own" : "peer"}`.trim();
+    const bodyRow = document.createElement("div");
+    bodyRow.className = "msg-row";
+    bodyRow.appendChild(text);
 
     if (msg.sender === user) {
       const deleteBtn = document.createElement("button");
@@ -121,11 +122,13 @@ function renderMessages(messages) {
       deleteBtn.className = "delete-btn";
       deleteBtn.dataset.deleteMsg = "1";
       deleteBtn.dataset.msgId = msg.id;
-      deleteBtn.textContent = "Delete";
-      actions.appendChild(deleteBtn);
+      deleteBtn.setAttribute("aria-label", "Delete message");
+      deleteBtn.innerHTML =
+        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-1 6h2v9H8V9Zm6 0h2v9h-2V9ZM6 9h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 9Z"/></svg>';
+      bodyRow.appendChild(deleteBtn);
     }
 
-    item.append(meta, text, actions);
+    item.append(meta, bodyRow);
 
     if (msg.sender !== user) {
       const reactions = document.createElement("div");
@@ -139,11 +142,12 @@ function renderMessages(messages) {
         button.dataset.reactBtn = "1";
         button.dataset.msgId = msg.id;
         button.dataset.reactionKey = reaction.key;
+        button.dataset.reactionEmoji = reaction.emoji;
         button.textContent = count > 0 ? `${reaction.emoji} ${count}` : reaction.emoji;
         reactions.appendChild(button);
       });
 
-      actions.prepend(reactions);
+      item.appendChild(reactions);
     }
 
     messagesEl.appendChild(item);
@@ -207,6 +211,21 @@ function removeLocalMessage(msgId) {
   const nextMessages = messages.filter((msg) => msg.id !== msgId);
   localStorage.setItem(LOCAL_MESSAGES_KEY, JSON.stringify(nextMessages.slice(-200)));
   renderMessages(nextMessages);
+}
+
+function spawnReactionFx(button, emoji) {
+  if (!button || !emoji) return;
+  const rect = button.getBoundingClientRect();
+  const fx = document.createElement("span");
+  fx.className = "reaction-fx";
+  fx.textContent = emoji;
+  fx.style.left = `${rect.left + rect.width / 2}px`;
+  fx.style.top = `${rect.top + rect.height / 2}px`;
+  document.body.appendChild(fx);
+
+  window.setTimeout(() => {
+    fx.remove();
+  }, 700);
 }
 
 function initLocalMessages() {
@@ -322,6 +341,8 @@ function init() {
     try {
       button.classList.add("bump");
       window.setTimeout(() => button.classList.remove("bump"), 260);
+      const emoji = button.dataset.reactionEmoji || "";
+      spawnReactionFx(button, emoji);
 
       if (!hasPlaceholderConfig && db) {
         const alreadyReacted = didUserReact(msg, reactionKey);
