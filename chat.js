@@ -53,13 +53,35 @@ function getCurrentUser() {
 }
 
 function formatTime(ms) {
-  if (!ms) return "sending...";
-  return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (!Number.isFinite(ms) || ms <= 0) return "sending...";
+  const d = new Date(ms);
+  if (Number.isNaN(d.getTime())) return "sending...";
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 function deriveStableId(msg) {
   if (msg.id) return String(msg.id);
   return `${String(msg.sender || "")}-${Number(msg.createdAtMs || 0)}-${String(msg.text || "").slice(0, 30)}`;
+}
+
+function parseCreatedAtMs(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  if (value && typeof value === "object") {
+    if (typeof value.toMillis === "function") {
+      const millis = value.toMillis();
+      if (Number.isFinite(millis)) return millis;
+    }
+    if (typeof value.seconds === "number") {
+      const nanos = typeof value.nanoseconds === "number" ? value.nanoseconds : 0;
+      const millis = value.seconds * 1000 + Math.floor(nanos / 1000000);
+      if (Number.isFinite(millis)) return millis;
+    }
+  }
+  return Date.now();
 }
 
 function normalizeMessage(msg) {
@@ -73,11 +95,15 @@ function normalizeMessage(msg) {
     if (cleanedUsers.length) reactions[reactionKey] = cleanedUsers;
   });
 
+  const messageText = [msg?.text, msg?.message, msg?.content, msg?.body]
+    .map((value) => (value == null ? "" : String(value)))
+    .find((value) => value.trim().length > 0) || "";
+
   return {
     id: deriveStableId(msg),
     sender: String(msg.sender || ""),
-    text: String(msg.text || ""),
-    createdAtMs: Number(msg.createdAtMs || Date.now()),
+    text: messageText,
+    createdAtMs: parseCreatedAtMs(msg.createdAtMs),
     reactions
   };
 }
