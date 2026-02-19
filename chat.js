@@ -103,7 +103,7 @@ function normalizeMessage(msg) {
     id: deriveStableId(msg),
     sender: String(msg.sender || ""),
     text: messageText,
-    createdAtMs: parseCreatedAtMs(msg.createdAtMs),
+    createdAtMs: parseCreatedAtMs(msg.createdAtMs ?? msg.createdAt ?? msg.timestamp),
     reactions
   };
 }
