@@ -16,7 +16,14 @@ const { db, hasPlaceholderConfig } = firebaseConfigModule;
 
 const ALLOWED_USERS = new Set(["meskat", "skatingonice"]);
 const ROOM_COLLECTION = "bday_chat_messages";
-const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "👍"];
+const REACTION_OPTIONS = [
+  { key: "heart", emoji: "\u2764\uFE0F" },
+  { key: "laugh", emoji: "\uD83D\uDE02" },
+  { key: "wow", emoji: "\uD83D\uDE2E" },
+  { key: "sad", emoji: "\uD83D\uDE22" },
+  { key: "like", emoji: "\uD83D\uDC4D" }
+];
+const REACTION_KEYS = new Set(REACTION_OPTIONS.map((item) => item.key));
 
 const statusEl = document.getElementById("status");
 const messagesEl = document.getElementById("messages");
@@ -48,10 +55,10 @@ function normalizeMessage(msg) {
     msg && typeof msg.reactions === "object" && msg.reactions !== null ? msg.reactions : {};
   const reactions = {};
 
-  Object.entries(rawReactions).forEach(([emoji, users]) => {
-    if (!REACTION_EMOJIS.includes(emoji) || !Array.isArray(users)) return;
+  Object.entries(rawReactions).forEach(([reactionKey, users]) => {
+    if (!REACTION_KEYS.has(reactionKey) || !Array.isArray(users)) return;
     const cleanedUsers = [...new Set(users.map((name) => String(name || "").toLowerCase()).filter(Boolean))];
-    if (cleanedUsers.length) reactions[emoji] = cleanedUsers;
+    if (cleanedUsers.length) reactions[reactionKey] = cleanedUsers;
   });
 
   return {
@@ -63,13 +70,15 @@ function normalizeMessage(msg) {
   };
 }
 
-function getReactionCount(msg, emoji) {
-  const list = msg.reactions && Array.isArray(msg.reactions[emoji]) ? msg.reactions[emoji] : [];
+function getReactionCount(msg, reactionKey) {
+  const list =
+    msg.reactions && Array.isArray(msg.reactions[reactionKey]) ? msg.reactions[reactionKey] : [];
   return list.length;
 }
 
-function didUserReact(msg, emoji) {
-  const list = msg.reactions && Array.isArray(msg.reactions[emoji]) ? msg.reactions[emoji] : [];
+function didUserReact(msg, reactionKey) {
+  const list =
+    msg.reactions && Array.isArray(msg.reactions[reactionKey]) ? msg.reactions[reactionKey] : [];
   return list.includes(user);
 }
 
@@ -97,15 +106,15 @@ function renderMessages(messages) {
       const reactions = document.createElement("div");
       reactions.className = "reactions";
 
-      REACTION_EMOJIS.forEach((emoji) => {
-        const count = getReactionCount(msg, emoji);
+      REACTION_OPTIONS.forEach((reaction) => {
+        const count = getReactionCount(msg, reaction.key);
         const button = document.createElement("button");
         button.type = "button";
-        button.className = `react-btn ${didUserReact(msg, emoji) ? "active" : ""}`.trim();
+        button.className = `react-btn ${didUserReact(msg, reaction.key) ? "active" : ""}`.trim();
         button.dataset.reactBtn = "1";
         button.dataset.msgId = msg.id;
-        button.dataset.emoji = emoji;
-        button.textContent = count > 0 ? `${emoji} ${count}` : emoji;
+        button.dataset.reactionKey = reaction.key;
+        button.textContent = count > 0 ? `${reaction.emoji} ${count}` : reaction.emoji;
         reactions.appendChild(button);
       });
 
@@ -146,20 +155,22 @@ function writeLocalMessage(msg) {
   localStorage.setItem(LOCAL_MESSAGES_KEY, JSON.stringify(messages.slice(-200)));
 }
 
-function toggleLocalReaction(msgId, emoji) {
+function toggleLocalReaction(msgId, reactionKey) {
   const messages = readLocalMessages();
   const index = messages.findIndex((msg) => msg.id === msgId);
   if (index < 0) return;
   if (messages[index].sender === user) return;
 
-  const existing = Array.isArray(messages[index].reactions[emoji]) ? messages[index].reactions[emoji] : [];
+  const existing = Array.isArray(messages[index].reactions[reactionKey])
+    ? messages[index].reactions[reactionKey]
+    : [];
   const hasReacted = existing.includes(user);
   const next = hasReacted ? existing.filter((name) => name !== user) : [...existing, user];
 
   if (next.length) {
-    messages[index].reactions[emoji] = next;
+    messages[index].reactions[reactionKey] = next;
   } else {
-    delete messages[index].reactions[emoji];
+    delete messages[index].reactions[reactionKey];
   }
 
   localStorage.setItem(LOCAL_MESSAGES_KEY, JSON.stringify(messages.slice(-200)));
@@ -245,21 +256,21 @@ function init() {
     if (!button) return;
 
     const msgId = button.dataset.msgId;
-    const emoji = button.dataset.emoji;
-    if (!msgId || !emoji) return;
+    const reactionKey = button.dataset.reactionKey;
+    if (!msgId || !reactionKey) return;
 
     const msg = currentMessages.find((item) => item.id === msgId);
     if (!msg || msg.sender === user) return;
 
     try {
       if (!hasPlaceholderConfig && db) {
-        const alreadyReacted = didUserReact(msg, emoji);
-        const path = `reactions.${emoji}`;
+        const alreadyReacted = didUserReact(msg, reactionKey);
+        const path = `reactions.${reactionKey}`;
         await updateDoc(doc(db, ROOM_COLLECTION, msgId), {
           [path]: alreadyReacted ? arrayRemove(user) : arrayUnion(user)
         });
       } else {
-        toggleLocalReaction(msgId, emoji);
+        toggleLocalReaction(msgId, reactionKey);
       }
     } catch (error) {
       console.error(error);
