@@ -84,6 +84,48 @@ function parseCreatedAtMs(value) {
   return Date.now();
 }
 
+function extractTextFromUnknownShape(msg) {
+  const directCandidates = [
+    msg?.text,
+    msg?.message,
+    msg?.content,
+    msg?.body,
+    msg?.msg,
+    msg?.caption,
+    msg?.value,
+    msg?.Text,
+    msg?.Message
+  ];
+
+  for (const value of directCandidates) {
+    if (typeof value === "string" && value.trim()) return value;
+  }
+
+  const nestedCandidates = [msg?.payload, msg?.data, msg?.messageData, msg?.chat];
+  for (const candidate of nestedCandidates) {
+    if (!candidate || typeof candidate !== "object") continue;
+    const nested = [
+      candidate.text,
+      candidate.message,
+      candidate.content,
+      candidate.body,
+      candidate.msg,
+      candidate.value
+    ];
+    for (const value of nested) {
+      if (typeof value === "string" && value.trim()) return value;
+    }
+  }
+
+  const ignoredKeys = new Set(["id", "sender", "createdAtMs", "createdAt", "timestamp", "reactions"]);
+  for (const [key, value] of Object.entries(msg || {})) {
+    if (ignoredKeys.has(key)) continue;
+    if (typeof value === "string" && value.trim()) return value;
+  }
+
+  return "";
+}
+
 function normalizeMessage(msg) {
   const rawReactions =
     msg && typeof msg.reactions === "object" && msg.reactions !== null ? msg.reactions : {};
@@ -95,9 +137,7 @@ function normalizeMessage(msg) {
     if (cleanedUsers.length) reactions[reactionKey] = cleanedUsers;
   });
 
-  const messageText = [msg?.text, msg?.message, msg?.content, msg?.body]
-    .map((value) => (value == null ? "" : String(value)))
-    .find((value) => value.trim().length > 0) || "";
+  const messageText = extractTextFromUnknownShape(msg);
 
   return {
     id: deriveStableId(msg),
