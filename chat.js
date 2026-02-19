@@ -91,7 +91,7 @@ function writeLocalMessage(msg) {
 }
 
 function initLocalMessages() {
-  setStatus(`Signed in as ${user} (local mode)`);
+  setStatus(`Signed in as ${user} (local mode: this browser only, not shared with friend)`);
   renderMessages(readLocalMessages());
 
   localPollTimer = window.setInterval(() => {
