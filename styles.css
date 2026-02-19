@@ -201,3 +201,20 @@ h1 {
     flex-direction: column;
   }
 }
+
+.version-badge {
+  position: fixed;
+  right: 10px;
+  bottom: 8px;
+  z-index: 999;
+  padding: 2px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+}
