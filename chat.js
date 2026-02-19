@@ -1,4 +1,4 @@
-import { db, hasPlaceholderConfig } from "./firebase-config.js";
+import * as firebaseConfigModule from "./firebase-config.js?v=20260219-2";
 import {
   addDoc,
   collection,
@@ -7,6 +7,8 @@ import {
   orderBy,
   query
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+const { db, hasPlaceholderConfig } = firebaseConfigModule;
 
 const ALLOWED_USERS = new Set(["meskat", "skatingonice"]);
 const ROOM_COLLECTION = "bday_chat_messages";
@@ -91,7 +93,8 @@ function writeLocalMessage(msg) {
 }
 
 function initLocalMessages() {
-  setStatus(`Signed in as ${user} (local mode: this browser only, not shared with friend)`);
+  const reason = hasPlaceholderConfig ? "placeholder config detected" : "firebase db unavailable";
+  setStatus(`Signed in as ${user} (local mode: ${reason}; this browser only, not shared with friend)`);
   renderMessages(readLocalMessages());
 
   localPollTimer = window.setInterval(() => {
