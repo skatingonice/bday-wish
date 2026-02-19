@@ -113,15 +113,17 @@ function renderMessages(messages) {
     text.textContent = msg.text || "";
 
     const actions = document.createElement("div");
-    actions.className = "msg-actions";
+    actions.className = `msg-actions ${msg.sender === user ? "own" : "peer"}`.trim();
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.className = "delete-btn";
-    deleteBtn.dataset.deleteMsg = "1";
-    deleteBtn.dataset.msgId = msg.id;
-    deleteBtn.textContent = "Delete";
-    actions.appendChild(deleteBtn);
+    if (msg.sender === user) {
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "delete-btn";
+      deleteBtn.dataset.deleteMsg = "1";
+      deleteBtn.dataset.msgId = msg.id;
+      deleteBtn.textContent = "Delete";
+      actions.appendChild(deleteBtn);
+    }
 
     item.append(meta, text, actions);
 
@@ -286,6 +288,8 @@ function init() {
     if (deleteButton) {
       const msgId = deleteButton.dataset.msgId;
       if (!msgId) return;
+      const message = currentMessages.find((item) => item.id === msgId);
+      if (!message || message.sender !== user) return;
 
       const messageEl = deleteButton.closest(".message");
       if (messageEl) messageEl.classList.add("deleting");
