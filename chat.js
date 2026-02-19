@@ -16,9 +16,11 @@ const messagesEl = document.getElementById("messages");
 const formEl = document.getElementById("chat-form");
 const inputEl = document.getElementById("message-input");
 const logoutBtn = document.getElementById("logout-btn");
+const LOCAL_MESSAGES_KEY = "bday_chat_messages_local";
 
 let user = null;
 let unsubscribe = null;
+let localPollTimer = null;
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -62,6 +64,41 @@ function disableChat(reason) {
   formEl.querySelector("button[type='submit']").disabled = true;
 }
 
+function readLocalMessages() {
+  try {
+    const raw = localStorage.getItem(LOCAL_MESSAGES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((msg) => msg && typeof msg === "object")
+      .map((msg) => ({
+        sender: String(msg.sender || ""),
+        text: String(msg.text || ""),
+        createdAtMs: Number(msg.createdAtMs || 0)
+      }))
+      .sort((a, b) => a.createdAtMs - b.createdAtMs)
+      .slice(-200);
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
+function writeLocalMessage(msg) {
+  const messages = readLocalMessages();
+  messages.push(msg);
+  localStorage.setItem(LOCAL_MESSAGES_KEY, JSON.stringify(messages.slice(-200)));
+}
+
+function initLocalMessages() {
+  setStatus(`Signed in as ${user} (local mode)`);
+  renderMessages(readLocalMessages());
+
+  localPollTimer = window.setInterval(() => {
+    renderMessages(readLocalMessages());
+  }, 1000);
+}
+
 function initRealtimeMessages() {
   const q = query(collection(db, ROOM_COLLECTION), orderBy("createdAtMs", "asc"), limit(200));
 
@@ -87,17 +124,16 @@ function init() {
     return;
   }
 
-  if (hasPlaceholderConfig || !db) {
-    disableChat("Firebase is not configured. Update firebase-config.js first.");
-  } else {
+  if (!hasPlaceholderConfig && db) {
     setStatus("Connecting to live chat...");
     initRealtimeMessages();
+  } else {
+    setStatus("Firebase is not configured. Using local chat on this browser.");
+    initLocalMessages();
   }
 
   formEl.addEventListener("submit", async (event) => {
     event.preventDefault();
-
-    if (!db || hasPlaceholderConfig) return;
 
     const text = inputEl.value.trim();
     if (!text) return;
@@ -105,11 +141,13 @@ function init() {
     inputEl.value = "";
 
     try {
-      await addDoc(collection(db, ROOM_COLLECTION), {
-        sender: user,
-        text,
-        createdAtMs: Date.now()
-      });
+      const payload = { sender: user, text, createdAtMs: Date.now() };
+      if (!hasPlaceholderConfig && db) {
+        await addDoc(collection(db, ROOM_COLLECTION), payload);
+      } else {
+        writeLocalMessage(payload);
+        renderMessages(readLocalMessages());
+      }
     } catch (error) {
       console.error(error);
       setStatus("Could not send message. Check Firebase permissions.");
@@ -118,6 +156,7 @@ function init() {
 
   logoutBtn.addEventListener("click", () => {
     if (unsubscribe) unsubscribe();
+    if (localPollTimer) window.clearInterval(localPollTimer);
     sessionStorage.removeItem("bday_chat_user");
     window.location.href = "login.html";
   });
