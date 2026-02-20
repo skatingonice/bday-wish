@@ -1,4 +1,5 @@
 import { db, hasPlaceholderConfig } from "./firebase-config.js";
+import { trackVisit } from "./analytics.js";
 import {
   addDoc,
   collection,
@@ -114,9 +115,14 @@ function init() {
   user = getCurrentUser();
 
   if (!ALLOWED_USERS.has(user)) {
-    window.location.href = "login.html";
+    window.location.href = "login.html?next=chat.html";
     return;
   }
+
+  trackVisit({
+    pageName: "chat",
+    knownUser: user
+  });
 
   if (!hasPlaceholderConfig && db) {
     setStatus("Connecting to live chat...");

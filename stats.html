@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Website Stats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="stats.css" />
+</head>
+<body>
+  <main class="stats-app">
+    <header class="stats-header">
+      <h1>Website Stats</h1>
+      <p id="status" class="status">Loading analytics...</p>
+      <div class="header-actions">
+        <button id="refresh-btn" class="action-btn" type="button">Refresh</button>
+        <a href="chat.html" class="action-btn">Open Chat</a>
+        <a href="index.html" class="action-btn">Back To Countdown</a>
+      </div>
+    </header>
+
+    <section class="summary-grid">
+      <article class="card">
+        <h2>Total Visits</h2>
+        <p id="total-visits" class="value">0</p>
+      </article>
+      <article class="card">
+        <h2>Unique Visitors</h2>
+        <p id="unique-visitors" class="value">0</p>
+      </article>
+      <article class="card">
+        <h2>Unique IPs</h2>
+        <p id="unique-ips" class="value">0</p>
+      </article>
+      <article class="card">
+        <h2>Latest Visit</h2>
+        <p id="latest-visit" class="value small">-</p>
+      </article>
+    </section>
+
+    <section class="lists-grid">
+      <article class="card">
+        <h2>Top Pages</h2>
+        <ul id="top-pages" class="list"></ul>
+      </article>
+      <article class="card">
+        <h2>Top Devices</h2>
+        <ul id="top-devices" class="list"></ul>
+      </article>
+      <article class="card">
+        <h2>Top Locations</h2>
+        <ul id="top-locations" class="list"></ul>
+      </article>
+    </section>
+
+    <section class="table-wrap">
+      <table class="visits-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>User</th>
+            <th>Page</th>
+            <th>IP</th>
+            <th>Location</th>
+            <th>Device</th>
+            <th>Phone Hint</th>
+            <th>Visitor ID</th>
+          </tr>
+        </thead>
+        <tbody id="visits-body"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <div class="version-badge" aria-label="App version">v0.0.0</div>
+  <script src="version.js?v=1.0.0-stable"></script>
+  <script type="module" src="stats.js?v=1.0.0-stable"></script>
+</body>
+</html>

@@ -1,7 +1,10 @@
+import { trackVisit } from "./analytics.js";
+
 const USERS = {
   meskat: "meskat30",
   skatingonice: "fallingdown"
 };
+const ALLOWED_NEXT_PAGES = new Set(["chat.html", "stats.html", "index.html"]);
 
 const formEl = document.getElementById("login-form");
 const statusEl = document.getElementById("login-status");
@@ -16,9 +19,22 @@ function currentUser() {
   return sessionStorage.getItem("bday_chat_user");
 }
 
+function getNextPage() {
+  const params = new URLSearchParams(window.location.search);
+  const next = (params.get("next") || "chat.html").trim();
+  return ALLOWED_NEXT_PAGES.has(next) ? next : "chat.html";
+}
+
 function init() {
+  trackVisit({
+    pageName: "login",
+    knownUser: currentUser() || null
+  });
+
+  const nextPage = getNextPage();
+
   if (currentUser()) {
-    window.location.href = "chat.html";
+    window.location.href = nextPage;
     return;
   }
 
@@ -40,7 +56,7 @@ function init() {
 
     sessionStorage.setItem("bday_chat_user", username);
     setStatus("Signed in. Redirecting...");
-    window.location.href = "chat.html";
+    window.location.href = nextPage;
   });
 }
 

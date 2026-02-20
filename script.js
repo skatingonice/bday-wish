@@ -1,3 +1,5 @@
+import { trackVisit } from "./analytics.js";
+
 const targetDate = new Date(2026, 11, 8, 0, 0, 0, 0);
 
 const refs = {
@@ -162,3 +164,8 @@ updateNotificationUi();
 
 tick();
 setInterval(tick, 1000);
+
+trackVisit({
+  pageName: "index",
+  knownUser: sessionStorage.getItem("bday_chat_user") || null
+});
